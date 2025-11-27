@@ -1,58 +1,86 @@
 export const Colors = {
-  primary: '#DC0A2D',
-  primaryDark: '#B80623',
-  primaryLight: '#FF3B5C',
-  secondary: '#2D5B9A',
-  secondaryDark: '#1E3D6F',
-  secondaryLight: '#4A7FC8',
+  // Primary Colors - Biru
+  primary: '#1E3A8A',      // Dark Blue
+  primaryDark: '#0F1F4D',  // Darker Blue
+  primaryLight: '#3B82F6', // Medium Blue
+  
+  // Secondary Colors - Kuning/Emas
+  secondary: '#FFD700',    // Gold
+  secondaryDark: '#B8860B', // Dark Gold
+  secondaryLight: '#FFEC8B', // Light Gold
+  
+  // Accent Colors
+  accent: '#FFA500',       // Orange
+  accentDark: '#CC8400',   // Dark Orange
+  accentLight: '#FFB74D',  // Light Orange
+
+  // Pokemon Types dengan tema biru & kuning
   types: {
     normal: '#A8A878',
-    fire: '#F08030',
-    water: '#6890F0',
-    electric: '#F8D030',
-    grass: '#78C850',
-    ice: '#98D8D8',
-    fighting: '#C03028',
-    poison: '#A040A0',
-    ground: '#E0C068',
-    flying: '#A890F0',
-    psychic: '#F85888',
-    bug: '#A8B820',
-    rock: '#B8A038',
-    ghost: '#705898',
-    dragon: '#7038F8',
-    dark: '#705848',
-    steel: '#B8B8D0',
-    fairy: '#EE99AC',
+    fire: '#FF6B35',       // Orange-red
+    water: '#3498DB',      // Blue
+    electric: '#FFD700',   // Gold
+    grass: '#27AE60',      // Green
+    ice: '#74B9FF',        // Light Blue
+    fighting: '#E74C3C',   // Red
+    poison: '#9B59B6',     // Purple
+    ground: '#D35400',     // Dark Orange
+    flying: '#87CEEB',     // Sky Blue
+    psychic: '#FF6B9D',    // Pink
+    bug: '#2ECC71',        // Green
+    rock: '#95A5A6',       // Gray
+    ghost: '#8E44AD',      // Dark Purple
+    dragon: '#1E3A8A',     // Dark Blue
+    dark: '#2C3E50',       // Dark Gray
+    steel: '#7F8C8D',      // Steel Gray
+    fairy: '#FF9FF3',      // Light Pink
   },
+  
+  // Neutral Colors
   white: '#FFFFFF',
   black: '#000000',
   gray: {
-    50: '#F8F9FA',
-    100: '#E9ECEF',
-    200: '#DEE2E6',
-    300: '#CED4DA',
-    400: '#ADB5BD',
-    500: '#6C757D',
-    600: '#495057',
-    700: '#343A40',
-    800: '#212529',
-    900: '#121416',
+    50: '#F8FAFC',
+    100: '#F1F5F9',
+    200: '#E2E8F0',
+    300: '#CBD5E1',
+    400: '#94A3B8',
+    500: '#64748B',
+    600: '#475569',
+    700: '#334155',
+    800: '#1E293B',
+    900: '#0F172A',
   },
-  success: '#28A745',
-  warning: '#FFC107',
-  error: '#DC3545',
-  info: '#17A2B8',
-  background: '#F8F9FA',
+  
+  // Status Colors
+  success: '#10B981',      // Green
+  warning: '#F59E0B',      // Amber
+  error: '#EF4444',        // Red
+  info: '#3B82F6',         // Blue
+  
+  // Background & Surface
+  background: '#F0F9FF',   // Very Light Blue
   surface: '#FFFFFF',
   card: '#FFFFFF',
+  
+  // Text Colors
   text: {
-    primary: '#212529',
-    secondary: '#6C757D',
-    disabled: '#ADB5BD',
+    primary: '#1E293B',    // Dark Blue/Gray
+    secondary: '#475569',  // Medium Gray
+    disabled: '#94A3B8',   // Light Gray
     inverse: '#FFFFFF',
   },
-  border: '#DEE2E6',
-  borderLight: '#E9ECEF',
-  borderDark: '#CED4DA',
+  
+  // Border Colors
+  border: '#E2E8F0',
+  borderLight: '#F1F5F9',
+  borderDark: '#CBD5E1',
+  
+  // Gradient Colors
+  gradients: {
+    primary: ['#1E3A8A', '#3B82F6'],
+    secondary: ['#FFD700', '#FFA500'],
+    background: ['#F0F9FF', '#E0F2FE'],
+    card: ['#FFFFFF', '#F8FAFC'],
+  }
 };

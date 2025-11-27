@@ -7,9 +7,11 @@ import {
   RefreshControl,
   Animated,
   Easing,
+  TouchableOpacity
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { FontAwesome6 } from "@react-native-vector-icons/fontawesome6";
 import Container from '../../components/layout/Container';
 import PokemonCard from '../../components/common/PokemonCard';
 import Loading from '../../components/common/Loading';
@@ -27,28 +29,29 @@ const PokemonList: React.FC = () => {
   
   const [refreshing, setRefreshing] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
-  const spinValue = new Animated.Value(0);
+  const [fadeAnim] = useState(new Animated.Value(0));
+  const [slideAnim] = useState(new Animated.Value(50));
 
   useEffect(() => {
-    startLoadingAnimation();
+    startAnimations();
   }, []);
 
-  const startLoadingAnimation = () => {
-    spinValue.setValue(0);
-    Animated.loop(
-      Animated.timing(spinValue, {
+  const startAnimations = () => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
         toValue: 1,
-        duration: 1000,
-        easing: Easing.linear,
+        duration: 800,
+        easing: Easing.out(Easing.ease),
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 600,
+        easing: Easing.out(Easing.ease),
         useNativeDriver: true,
       })
-    ).start();
+    ]).start();
   };
-
-  const spin = spinValue.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '360deg'],
-  });
 
   const handlePokemonPress = (pokemon: PokemonListItem) => {
     const pokemonId = (pokemon as any).id || parseInt(pokemon.url.split('/').slice(-2, -1)[0], 10);
@@ -77,32 +80,69 @@ const PokemonList: React.FC = () => {
 
     return (
       <View style={styles.footer}>
-        <Animated.View style={{ transform: [{ rotate: spin }] }}>
-          <Text style={styles.loadingIcon}>🌀</Text>
-        </Animated.View>
-        <Text style={styles.footerText}>Loading more Pokémon...</Text>
+        <Loading size="small" text="Loading more Pokémon..." type="dots" />
       </View>
     );
   };
 
   const renderHeader = () => (
-    <View style={styles.header}>
-      <Text style={styles.title}>Pokédex</Text>
-      <Text style={styles.subtitle}>
-        Discover and explore all Pokémon creatures
-      </Text>
-    </View>
+    <Animated.View 
+      style={[
+        styles.header,
+        { 
+          opacity: fadeAnim,
+          transform: [{ translateY: slideAnim }]
+        }
+      ]}
+    >
+      <View style={styles.headerContent}>
+        <View style={styles.titleContainer}>
+          <FontAwesome6 name="dragon" size={40} color="#FFD700" solid />
+          <Text style={styles.title}>Pokédex</Text>
+        </View>
+        <Text style={styles.subtitle}>
+          Discover and explore all Pokémon creatures
+        </Text>
+        
+        {/* Stats Row */}
+        <View style={styles.statsContainer}>
+          <View style={styles.statItem}>
+            <FontAwesome6 name="circle" size={16} color="#FFD700" solid />
+            <Text style={styles.statNumber}>{pokemonList.length}</Text>
+            <Text style={styles.statLabel}>Loaded</Text>
+          </View>
+          <View style={styles.statDivider} />
+          <View style={styles.statItem}>
+            <FontAwesome6 name="infinity" size={16} color="#FFD700" solid />
+            <Text style={styles.statNumber}>∞</Text>
+            <Text style={styles.statLabel}>Total</Text>
+          </View>
+          <View style={styles.statDivider} />
+          <View style={styles.statItem}>
+            <FontAwesome6 name="bolt" size={16} color="#FFD700" solid />
+            <Text style={styles.statNumber}>1025</Text>
+            <Text style={styles.statLabel}>Species</Text>
+          </View>
+        </View>
+      </View>
+    </Animated.View>
   );
+
+  const renderPokemonCard = ({ item }: { item: PokemonListItem }) => {
+    const pokemonId = (item as any).id || parseInt(item.url.split('/').slice(-2, -1)[0], 10);
+    return (
+      <PokemonCard
+        pokemon={item}
+        pokemonId={pokemonId}
+        onPress={handlePokemonPress}
+      />
+    );
+  };
 
   if (isLoading && pokemonList.length === 0) {
     return (
       <Container>
-        <View style={styles.loadingContainer}>
-          <Animated.View style={{ transform: [{ rotate: spin }] }}>
-            <Text style={styles.loadingIconLarge}>🌀</Text>
-          </Animated.View>
-          <Text style={styles.loadingText}>Loading Pokémon...</Text>
-        </View>
+        <Loading text="Loading Pokémon..." type="pokeball" />
       </Container>
     );
   }
@@ -115,6 +155,7 @@ const PokemonList: React.FC = () => {
           message={error}
           onRetry={refreshList}
           retryButtonText="Try Again"
+          icon="triangle-exclamation"
         />
       </Container>
     );
@@ -124,92 +165,210 @@ const PokemonList: React.FC = () => {
     <Container>
       <FlatList
         data={pokemonList}
-        keyExtractor={(item) => item.name}
-        renderItem={({ item }) => {
-          const pokemonId = (item as any).id || parseInt(item.url.split('/').slice(-2, -1)[0], 10);
-          return (
-            <PokemonCard
-              pokemon={item}
-              pokemonId={pokemonId}
-              onPress={handlePokemonPress}
-            />
-          );
-        }}
+        keyExtractor={(item, index) => `${item.name}-${index}`}
+        renderItem={renderPokemonCard}
         numColumns={2}
         contentContainerStyle={styles.listContainer}
+        columnWrapperStyle={styles.columnWrapper}
         ListHeaderComponent={renderHeader}
         ListFooterComponent={renderFooter}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={handleRefresh}
-            colors={[Theme.colors.primary]}
-            tintColor={Theme.colors.primary}
+            colors={['#1E3A8A']}
+            tintColor={'#1E3A8A'}
           />
         }
         onEndReached={handleLoadMore}
-        onEndReachedThreshold={0.5}
+        onEndReachedThreshold={0.3}
         showsVerticalScrollIndicator={false}
+        ListEmptyComponent={
+          !isLoading && (
+            <View style={styles.emptyState}>
+              <FontAwesome6 name="dragon" size={80} color="#1E3A8A" iconStyle='solid'/>
+              <Text style={styles.emptyText}>No Pokémon found</Text>
+              <Text style={styles.emptySubtext}>Pull to refresh or check your connection</Text>
+            </View>
+          )
+        }
       />
+
+      {/* Floating Action Button */}
+      {pokemonList.length > 0 && (
+        <TouchableOpacity 
+          style={styles.fab}
+          onPress={handleRefresh}
+        >
+          <FontAwesome6 name="rotate" size={20} color="#FFFFFF" iconStyle='solid' />
+        </TouchableOpacity>
+      )}
     </Container>
   );
 };
 
 const styles = StyleSheet.create({
   listContainer: {
-    padding: Theme.spacing.sm,
+    padding: 16,
+    paddingBottom: 100,
+  },
+  columnWrapper: {
+    justifyContent: 'space-between',
+    marginBottom: 16,
+    gap: 12,
   },
   header: {
-    padding: Theme.spacing.lg,
+    backgroundColor: 'rgba(30, 58, 138, 0.15)',
+    borderRadius: 20,
+    borderWidth: 3,
+    borderColor: '#FFD700',
+    padding: 20,
+    marginBottom: 16,
+    shadowColor: '#FFD700',
+    shadowOffset: {
+      width: 0,
+      height: 6,
+    },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 12,
+    overflow: 'hidden',
+    borderLeftWidth: 8,
+    borderLeftColor: '#1E3A8A',
+    borderRightWidth: 8,
+    borderRightColor: '#1E3A8A',
+  },
+  headerContent: {
     alignItems: 'center',
-    backgroundColor: Theme.colors.primary,
-    borderRadius: Theme.borders.radius.large,
-    margin: Theme.spacing.sm,
-    ...Theme.shadows.medium,
+  },
+  titleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+    backgroundColor: 'rgba(30, 58, 138, 0.8)',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 25,
+    borderWidth: 2,
+    borderColor: '#FFD700',
   },
   title: {
-    fontSize: Theme.typography.size.xxxl,
-    fontFamily: Theme.typography.family.bold,
-    color: Theme.colors.white,
-    marginBottom: Theme.spacing.sm,
+    fontSize: 32,
+    fontFamily: 'System',
+    fontWeight: '900',
+    color: '#FFD700',
+    marginLeft: 12,
+    textShadowColor: '#1E3A8A',
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 4,
+    letterSpacing: 1,
   },
   subtitle: {
-    fontSize: Theme.typography.size.md,
-    fontFamily: Theme.typography.family.regular,
-    color: Theme.colors.white,
+    fontSize: 16,
+    fontFamily: 'System',
+    fontWeight: '600',
+    color: '#1E3A8A',
     textAlign: 'center',
-    opacity: 0.9,
+    marginBottom: 20,
+    lineHeight: 22,
+    backgroundColor: 'rgba(255, 215, 0, 0.3)',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 15,
+    borderWidth: 1,
+    borderColor: '#FFD700',
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
+  statsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
     alignItems: 'center',
-    padding: Theme.spacing.xl,
+    backgroundColor: 'rgba(30, 58, 138, 0.9)',
+    borderRadius: 20,
+    padding: 16,
+    borderWidth: 2,
+    borderColor: '#FFD700',
+    width: '100%',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 8,
   },
-  loadingIconLarge: {
-    fontSize: 60,
-    marginBottom: Theme.spacing.lg,
+  statItem: {
+    alignItems: 'center',
+    flex: 1,
   },
-  loadingIcon: {
-    fontSize: 30,
-    marginRight: Theme.spacing.sm,
+  statNumber: {
+    fontSize: 20,
+    fontFamily: 'System',
+    fontWeight: '800',
+    color: '#FFD700',
+    marginVertical: 4,
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
   },
-  loadingText: {
-    fontSize: Theme.typography.size.lg,
-    fontFamily: Theme.typography.family.medium,
-    color: Theme.colors.text.secondary,
-    marginTop: Theme.spacing.md,
+  statLabel: {
+    fontSize: 12,
+    fontFamily: 'System',
+    fontWeight: '600',
+    color: '#FFFFFF',
+    textAlign: 'center',
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
+  },
+  statDivider: {
+    width: 2,
+    height: 40,
+    backgroundColor: '#FFD700',
+    borderRadius: 1,
+    opacity: 0.6,
   },
   footer: {
-    flexDirection: 'row',
+    padding: 20,
+    alignItems: 'center',
+  },
+  emptyState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 100,
+  },
+  emptyText: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#1E3A8A',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: '#1E3A8A',
+    textAlign: 'center',
+  },
+  fab: {
+    position: 'absolute',
+    bottom: 30,
+    right: 30,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#1E3A8A',
+    borderWidth: 3,
+    borderColor: '#FFD700',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: Theme.spacing.lg,
-  },
-  footerText: {
-    fontSize: Theme.typography.size.md,
-    fontFamily: Theme.typography.family.regular,
-    color: Theme.colors.text.secondary,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.6,
+    shadowRadius: 8,
+    elevation: 12,  
   },
 });
 

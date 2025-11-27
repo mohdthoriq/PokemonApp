@@ -6,6 +6,8 @@ export type RootStackParamList = {
   Main: undefined;
   PokemonDetail: { pokemonId: number; pokemonName: string };
   NotFound: { error?: string };
+  BiometricSetup: undefined;
+  LocationSetup: undefined;
 };
 
 export type AuthStackParamList = {
@@ -17,10 +19,21 @@ export type MainTabParamList = {
   PokemonList: undefined;
   Favorites: undefined;
   Settings: undefined;
+  BiometricSetup: undefined;
+  LocationSetup: undefined;
 };
 
 export type DrawerParamList = {
   MainTabs: undefined;
+  Settings: undefined;
+  BiometricSettings: undefined;
+  LocationSettings: undefined;
+};
+
+export type MainStackParamList = {
+  PokemonList: undefined;
+  PokemonDetail: { pokemonId: number; pokemonName: string };
+  Favorites: undefined;
   Settings: undefined;
   BiometricSettings: undefined;
   LocationSettings: undefined;

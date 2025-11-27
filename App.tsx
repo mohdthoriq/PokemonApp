@@ -18,7 +18,7 @@ const App: React.FC = () => {
       <NavigationContainer>
         <ErrorBoundary>
           <StatusBar 
-            backgroundColor="#DC0A2D" 
+            backgroundColor='#3a6bbbff' 
             barStyle="light-content" 
             translucent={false}
           />

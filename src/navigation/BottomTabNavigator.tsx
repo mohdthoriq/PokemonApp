@@ -2,7 +2,6 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import PokemonList from '../screens/main/PokemonList';
 import Favorites from '../screens/main/Favorites';
-import Settings from '../screens/settings/Settings';
 import { MainTabParamList } from '../types/navigation';
 import BottomTabBar from '../components/layout/BottomTabBar';
 
@@ -25,11 +24,6 @@ const BottomTabNavigator: React.FC = () => {
         name="Favorites" 
         component={Favorites}
         options={{ title: 'Favorites' }}
-      />
-      <Tab.Screen 
-        name="Settings" 
-        component={Settings}
-        options={{ title: 'Settings' }}
       />
     </Tab.Navigator>
   );

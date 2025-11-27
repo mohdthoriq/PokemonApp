@@ -6,6 +6,7 @@ export const STORAGE_KEYS = {
   USER_DATA: 'user_data',
   FAVORITES: 'favorites',
   BIOMETRIC_ENABLED: 'biometric_enabled',
+  BIOMETRIC_STATUS: 'BIOMETRIC_STATUS'
 };
 
 export const BIOMETRIC_TYPE = {

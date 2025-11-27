@@ -7,9 +7,11 @@ import {
   Animated,
   Easing,
   TouchableOpacity,
+  Alert
 } from 'react-native';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { FontAwesome6 } from "@react-native-vector-icons/fontawesome6";
 import Container from '../../components/layout/Container';
 import PokemonCard from '../../components/common/PokemonCard';
 import Loading from '../../components/common/Loading';
@@ -28,18 +30,20 @@ const Favorites: React.FC = () => {
   const navigation = useNavigation<FavoritesScreenNavigationProp>();
   const isFocused = useIsFocused();
   
-  const { favorites, isLoading: favoritesLoading, clearFavorites } = useFavorites();
+  const { favorites, isLoading: favoritesLoading, clearFavorites, isFavorite, toggleFavorite } = useFavorites();
   const { fetchPokemonDetail } = usePokemon();
   
   const [favoritePokemon, setFavoritePokemon] = useState<Pokemon[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const bounceValue = new Animated.Value(0);
+  const [bounceValue] = useState(new Animated.Value(0));
+  const [fadeAnim] = useState(new Animated.Value(0));
 
   useEffect(() => {
     if (isFocused) {
       loadFavoritePokemon();
       startBounceAnimation();
+      startFadeAnimation();
     }
   }, [favorites, isFocused]);
 
@@ -61,6 +65,15 @@ const Favorites: React.FC = () => {
         }),
       ])
     ).start();
+  };
+
+  const startFadeAnimation = () => {
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 800,
+      easing: Easing.out(Easing.ease),
+      useNativeDriver: true,
+    }).start();
   };
 
   const bounce = bounceValue.interpolate({
@@ -103,11 +116,31 @@ const Favorites: React.FC = () => {
     });
   };
 
-  const handleClearFavorites = async () => {
-    const success = await clearFavorites();
-    if (success) {
-      setFavoritePokemon([]);
-    }
+  const handleToggleFavorite = async (pokemonId: number) => {
+    await toggleFavorite(pokemonId);
+  };
+
+  const handleClearFavorites = () => {
+    Alert.alert(
+      'Clear All Favorites',
+      'Are you sure you want to remove all Pokémon from your favorites?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Clear All',
+          style: 'destructive',
+          onPress: async () => {
+            const success = await clearFavorites();
+            if (success) {
+              setFavoritePokemon([]);
+            }
+          },
+        },
+      ]
+    );
   };
 
   const handleRetry = () => {
@@ -120,10 +153,10 @@ const Favorites: React.FC = () => {
     id: pokemon.id,
   });
 
-  // Render loading animation dengan emoji atau ActivityIndicator
+  // Render loading animation
   const renderLoadingAnimation = () => (
     <Animated.View style={{ transform: [{ translateY: bounce }] }}>
-      <Text style={styles.loadingIcon}>⭐</Text>
+      <FontAwesome6 name="heart" size={60} color={Theme.colors.primary} />
     </Animated.View>
   );
 
@@ -146,6 +179,7 @@ const Favorites: React.FC = () => {
           message={error}
           onRetry={handleRetry}
           retryButtonText="Try Again"
+          icon="heart-crack"
         />
       </Container>
     );
@@ -154,9 +188,14 @@ const Favorites: React.FC = () => {
   if (favoritePokemon.length === 0) {
     return (
       <Container>
-        <View style={styles.emptyContainer}>
+        <Animated.View 
+          style={[
+            styles.emptyContainer,
+            { opacity: fadeAnim }
+          ]}
+        >
           <Animated.View style={{ transform: [{ translateY: bounce }] }}>
-            <Text style={styles.emptyIcon}>💔</Text>
+            <FontAwesome6 name="heart-crack" size={80} color={Theme.colors.gray[400]} iconStyle='solid'/>
           </Animated.View>
           <Text style={styles.emptyTitle}>No Favorite Pokémon</Text>
           <Text style={styles.emptyMessage}>
@@ -167,28 +206,44 @@ const Favorites: React.FC = () => {
             onPress={() => navigation.navigate('Main')}
             variant="primary"
             style={styles.exploreButton}
+            icon="dragon"
+            iconPosition="left"
           />
-        </View>
+        </Animated.View>
       </Container>
     );
   }
 
   return (
     <Container>
-      <View style={styles.header}>
-        <Text style={styles.title}>Favorite Pokémon</Text>
-        <Text style={styles.subtitle}>
-          {favoritePokemon.length} {favoritePokemon.length === 1 ? 'Pokémon' : 'Pokémon'} saved
-        </Text>
-        
-        <Button
-          title="Clear All Favorites"
-          onPress={handleClearFavorites}
-          variant="outline"
-          size="small"
-          style={styles.clearButton}
-        />
-      </View>
+      <Animated.View 
+        style={[
+          styles.header,
+          { opacity: fadeAnim }
+        ]}
+      >
+        <View style={styles.headerContent}>
+          <View style={styles.titleContainer}>
+            <FontAwesome6 name="heart" size={32} color={Theme.colors.white} />
+            <Text style={styles.title}>Favorite Pokémon</Text>
+          </View>
+          <Text style={styles.subtitle}>
+            {favoritePokemon.length} {favoritePokemon.length === 1 ? 'Pokémon' : 'Pokémon'} saved
+          </Text>
+          
+          <View style={styles.actionsContainer}>
+            <Button
+              title="Clear All"
+              onPress={handleClearFavorites}
+              variant="outline"
+              size="small"
+              style={styles.clearButton}
+              icon="trash"
+              iconPosition="left"
+            />
+          </View>
+        </View>
+      </Animated.View>
 
       <FlatList
         data={favoritePokemon}
@@ -199,6 +254,8 @@ const Favorites: React.FC = () => {
             pokemonId={item.id}
             types={item.types.map(type => type.type.name)}
             onPress={() => handlePokemonPress(item)}
+            isFavorite={isFavorite(item.id)}
+            onToggleFavorite={() => handleToggleFavorite(item.id)}
           />
         )}
         numColumns={2}
@@ -216,25 +273,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: Theme.spacing.xl,
   },
-  loadingIcon: {
-    fontSize: 60,
-    marginBottom: Theme.spacing.lg,
-  },
   loadingText: {
     fontSize: Theme.typography.size.lg,
     fontFamily: Theme.typography.family.medium,
     color: Theme.colors.text.secondary,
+    marginTop: Theme.spacing.lg,
   },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: Theme.spacing.xl,
-  },
-  emptyIcon: {
-    fontSize: 80,
-    marginBottom: Theme.spacing.lg,
-    opacity: 0.7,
   },
   emptyTitle: {
     fontSize: Theme.typography.size.xl,
@@ -257,13 +306,20 @@ const styles = StyleSheet.create({
   header: {
     padding: Theme.spacing.lg,
     backgroundColor: Theme.colors.primary,
+  },
+  headerContent: {
     alignItems: 'center',
+  },
+  titleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: Theme.spacing.sm,
   },
   title: {
     fontSize: Theme.typography.size.xxl,
     fontFamily: Theme.typography.family.bold,
     color: Theme.colors.white,
-    marginBottom: Theme.spacing.xs,
+    marginLeft: Theme.spacing.sm,
   },
   subtitle: {
     fontSize: Theme.typography.size.md,
@@ -271,6 +327,10 @@ const styles = StyleSheet.create({
     color: Theme.colors.white,
     opacity: 0.9,
     marginBottom: Theme.spacing.lg,
+  },
+  actionsContainer: {
+    flexDirection: 'row',
+    gap: Theme.spacing.md,
   },
   clearButton: {
     backgroundColor: 'rgba(255, 255, 255, 0.2)',

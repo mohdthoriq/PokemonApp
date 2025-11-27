@@ -1,94 +1,108 @@
-import ReactNativeBiometrics from 'react-native-biometrics';
+import { 
+  isSensorAvailable,
+  simplePrompt
+} from '@sbaiahmed1/react-native-biometrics';
 import Keychain from 'react-native-keychain';
-import { STORAGE_KEYS, BIOMETRIC_TYPE } from '../../utils/constans';
+import { STORAGE_KEYS } from '../../utils/constans';
 
 class BiometricAuthService {
-  private reactNativeBiometrics = ReactNativeBiometrics;
 
-  async isBiometricAvailable(): Promise<{
-    available: boolean;
-    biometryType?: string;
-    error?: string;
-  }> {
+  async isBiometricAvailable() {
     try {
-      const { available, biometryType } = await this.reactNativeBiometrics.isSensorAvailable();
-      
+      const result = await isSensorAvailable();
       return {
-        available,
-        biometryType: biometryType || undefined,
+        available: result.available,
+        biometryType: result.biometryType
       };
-    } catch (error) {
-      console.error('Error checking biometric availability:', error);
-      return {
-        available: false,
-        error: 'Biometric check failed',
-      };
+    } catch (e) {
+      console.log('Biometric check failed:', e);
+      return { available: false };
     }
   }
 
-  async enableBiometricAuth(username: string, password: string): Promise<boolean> {
+  async enableBiometricAuth(username: string, password: string) {
     try {
       const { available } = await this.isBiometricAvailable();
-      
-      if (!available) {
-        throw new Error('Biometric authentication not available');
-      }
+      if (!available) return false;
 
-      // Create biometric signature
-      const { success, signature } = await this.reactNativeBiometrics.createSignature({
-        promptMessage: 'Enable biometric login for Pokedex App',
-        payload: username,
+      // Prompt biometric
+      const { success } = await simplePrompt('Enable biometric login for Pokedex App');
+      if (!success) return false;
+
+      // Simpan credentials
+      await Keychain.setGenericPassword(username, password, {
+        service: STORAGE_KEYS.BIOMETRIC_ENABLED,
+        accessible: Keychain.ACCESSIBLE.WHEN_UNLOCKED_THIS_DEVICE_ONLY
       });
 
-      if (success && signature) {
-        // Store biometric enabled flag
-        await Keychain.setInternetCredentials(
-          STORAGE_KEYS.BIOMETRIC_ENABLED,
-          username,
-          'true',
-          { accessible: Keychain.ACCESSIBLE.WHEN_UNLOCKED_THIS_DEVICE_ONLY }
-        );
+      // Simpan flag biometric aktif
+      await Keychain.setGenericPassword('biometric_enabled', 'true', {
+        service: STORAGE_KEYS.BIOMETRIC_STATUS,
+        accessible: Keychain.ACCESSIBLE.WHEN_UNLOCKED_THIS_DEVICE_ONLY
+      });
 
-        return true;
-      }
-
-      return false;
-    } catch (error) {
-      console.error('Error enabling biometric auth:', error);
-      return false;
-    }
-  }
-
-  async disableBiometricAuth(): Promise<boolean> {
-    try {
-      await Keychain.resetInternetCredentials(STORAGE_KEYS.BIOMETRIC_ENABLED);
       return true;
-    } catch (error) {
-      console.error('Error disabling biometric auth:', error);
+
+    } catch (e) {
+      console.log('Enable biometric error:', e);
       return false;
     }
   }
 
-  async isBiometricEnabled(): Promise<boolean> {
+  async disableBiometricAuth() {
     try {
-      const credentials = await Keychain.getInternetCredentials(STORAGE_KEYS.BIOMETRIC_ENABLED);
-      return !!credentials && credentials.password === 'true';
-    } catch (error) {
-      console.error('Error checking biometric status:', error);
+      await Keychain.resetGenericPassword({ service: STORAGE_KEYS.BIOMETRIC_ENABLED });
+      await Keychain.resetGenericPassword({ service: STORAGE_KEYS.BIOMETRIC_STATUS });
+      return true;
+    } catch (e) {
+      console.log('Disable biometric error:', e);
       return false;
     }
   }
 
-  async authenticateWithBiometric(): Promise<boolean> {
+  async isBiometricEnabled() {
     try {
-      const { success } = await this.reactNativeBiometrics.simplePrompt({
-        promptMessage: 'Authenticate to access Pokedex App',
+      const flag = await Keychain.getGenericPassword({
+        service: STORAGE_KEYS.BIOMETRIC_STATUS
+      });
+      if (!flag) return false;
+      return flag?.password === 'true';
+    } catch (e) {
+      console.log('Check biometric status error:', e);
+      return false;
+    }
+  }
+
+  async getStoredCredentials() {
+    try {
+      const creds = await Keychain.getGenericPassword({
+        service: STORAGE_KEYS.BIOMETRIC_ENABLED
       });
 
-      return success;
-    } catch (error) {
-      console.error('Error with biometric authentication:', error);
-      return false;
+      if (!creds) return null;
+
+      return {
+        username: creds.username,
+        password: creds.password
+      };
+
+    } catch (e) {
+      console.log('Get stored credentials error:', e);
+      return null;
+    }
+  }
+
+  async authenticateWithBiometric() {
+    try {
+      const { success } = await simplePrompt('Authenticate to access Pokedex App');
+      if (!success) return { success: false };
+
+      const credentials = await this.getStoredCredentials();
+      return { success: true, credentials };
+
+    } catch (e) {
+      console.log('Biometric auth error:', e);
+      return { success: false };
     }
   }
 }
