@@ -5,24 +5,28 @@
  * @format
  */
 
-import { NewAppScreen } from '@react-native/new-app-screen';
-import { StatusBar, StyleSheet, useColorScheme, View } from 'react-native';
+import React from 'react';
+import { StatusBar } from 'react-native';
+import { NavigationContainer } from '@react-navigation/native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import ErrorBoundary from './src/components/common/ErrorBoundary';
+import AppNavigator from './src/navigation/AppNavigator';
 
-function App() {
-  const isDarkMode = useColorScheme() === 'dark';
-
+const App: React.FC = () => {
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      <NewAppScreen templateFileName="App.tsx" />
-    </View>
+    <SafeAreaProvider>
+      <NavigationContainer>
+        <ErrorBoundary>
+          <StatusBar 
+            backgroundColor='#3a6bbbff' 
+            barStyle="light-content" 
+            translucent={false}
+          />
+          <AppNavigator />
+        </ErrorBoundary>
+      </NavigationContainer>
+    </SafeAreaProvider>
   );
-}
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-});
+};
 
 export default App;
